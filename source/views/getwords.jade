@@ -1,0 +1,12 @@
+extends layout
+
+block content
+    p= title
+    p Using letters:
+    p= letters
+    p= size
+
+    ul
+      each word in words
+        li= word
+

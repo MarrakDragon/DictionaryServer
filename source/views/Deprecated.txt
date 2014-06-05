@@ -1,0 +1,1 @@
+﻿Generally speaking, we don't use views for this project, as it's just a backend 

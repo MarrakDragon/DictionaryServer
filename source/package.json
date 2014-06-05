@@ -1,0 +1,15 @@
+{
+  "name": "WordGame",
+  "version": "0.0.0",
+  "description": "WordGame",
+  "main": "app.js",
+  "author": {
+    "name": "Jeff Brown",
+    "email": "jeff@cheezburger.com"
+  },
+  "dependencies": {
+    "express": "3.4.4",
+    "jade": "*",
+    "stylus": "*"
+  }
+}
