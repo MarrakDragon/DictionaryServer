@@ -1,9 +1,12 @@
 /*!
  * gaddag.js
  * Copyright(c) 2012 hillerstorm <progr@mmer.nu>
+ * Mods by Jeff Brown
+ * No explicit license
  */
 var fs = require('fs');
 
+// String helper.
 function str (node) {
     var s, label;
 
