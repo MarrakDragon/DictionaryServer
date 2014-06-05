@@ -42,7 +42,7 @@ app.use(app.router);
 app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 // Dictionary Load for DAG
-//dictionary.loadDictionary('public\\dictionaries\\enable1.txt');
+dictionary.loadDictionary('public\\dictionaries\\enable1.txt');
 
 // development only
 if ('development' === app.get('env')) {
