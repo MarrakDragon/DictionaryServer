@@ -3,11 +3,12 @@
  * Check the validity of a word against a word set
  */
 
-module.exports = function (dictionary) {
+module.exports = function (lookupLib) {
 
     return {
         isValid: function (req, res) {
-            var valid = dictionary.find(req.query.word);
+            var dictionaryToUse = req.query.dictionaryToUse;
+            var valid = lookupLib.find(req.query.word, dictionaryToUse);
             res.writeHead(200, { "Access-Control-Allow-Origin": "*" });
             var body = JSON.stringify({ isValid: valid });
             res.write(body);
@@ -17,12 +18,13 @@ module.exports = function (dictionary) {
         },
 
         getWords: function (req, res) {
+            var dictionaryToUse = req.query.dictionaryToUse;
             var letters = req.query.letters;
             var size = req.query.size;
-            dictionary.createBoard(3);
-            var wordsFound = dictionary.findWords(letters, size);
+//            lookupLib.createBoard(3);
+            var wordsFound = lookupLib.findWords(letters, size, dictionaryToUse);
             res.json({ found: wordsFound });
-            console.log(res);
+            //console.log(res);
 
         }
     };

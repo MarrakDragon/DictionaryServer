@@ -6,8 +6,9 @@
 var express = require('express');
 var routes = require('./routes');
 var gaddag = require('./private/gaddag.js');
-var dictionary = gaddag();
-var check = require('./routes/check')(dictionary);
+var lookupLib = gaddag();
+var defaultRoute = require('./routes/index');
+var check = require('./routes/check')(lookupLib);
 var http = require('http');
 var path = require('path');
 
@@ -41,15 +42,33 @@ if ('development' === app.get('env')) {
 app.use(app.router);
 app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
+
 // Dictionary Load for DAG
-dictionary.loadDictionary('public\\dictionaries\\enable1.txt');
+console.log('Starting load of enable...');
+lookupLib.loadDictionary('public\\dictionaries\\enable1.txt', function () {
+    console.log("Loaded enable!");
+});
+
+console.log('Starting load of SOWPODS...');
+// Dictionary Load for DAG
+lookupLib.loadDictionary('public\\dictionaries\\sowpods.txt', function () {
+    console.log("Loaded SOWPODS");
+});
+
+console.log('Starting load of TWL06...');
+// Dictionary Load for DAG
+lookupLib.loadDictionary('public\\dictionaries\\TWL06.txt', function () {
+    console.log("Loaded TWL06");
+});
 
 // development only
 if ('development' === app.get('env')) {
-  app.use(express.errorHandler());
-}
+    app.use(express.errorHandler());
+};
 
-app.get('/', routes.index);
+lookupLib.init();
+
+app.get('/', defaultRoute.index);
 app.get('/check/isWordValid', check.isValid);
 app.get('/check/getWords', check.getWords);
 

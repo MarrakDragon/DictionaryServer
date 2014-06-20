@@ -28,10 +28,12 @@ function str (node) {
 module.exports = function () {
     var nextId = 0,
         previousWord = '',
-        root = { id: nextId++, edges: {}, $: 0 },
+        root = new Array(),
+//        root = { id: nextId++, edges: {}, $: 0 },
         uncheckedNodes = [],
         minimizedNodes = {},
-        letterMatrix;
+        dictionariesLoaded = [],
+        letterMatrix = [];
 
     function minimize (downTo) {
         var i, tuple,
@@ -49,9 +51,15 @@ module.exports = function () {
         }
     };
 
-    function insert (word) {
+    function insert(dictIndex, word) {
         var commonPrefix = 0, i,
             node, slicedWord, nd, ltr;
+
+        // Trivial Rejection
+        if (dictionariesLoaded.indexOf(dictIndex) == -1) {
+            console.log("Bad Dictionary Name!" + dictIndex);
+            return;
+        }
 
         for (i = 0; i < Math.min(word.length, previousWord.length); i++) {
             if (word[i] !== previousWord[i]) {
@@ -62,7 +70,7 @@ module.exports = function () {
 
         minimize(commonPrefix);
         if (uncheckedNodes.length === 0) {
-            node = root;
+            node = root[dictIndex];
         } else {
             node = uncheckedNodes[uncheckedNodes.length-1].child;
         }
@@ -92,14 +100,7 @@ module.exports = function () {
 
     var createBoard = function( size ) {
 
-        // Make a two dim array mimicing the board matrix
-        letterMatrix = new Array(size);
-        for (var row = 0; row < size; row++) {
-            letterMatrix[row] = new Array(size);
-            for (var col = 0; col < size; col++) {
-                letterMatrix[row][col] = '';
-            };
-        };
+
 
     };
 
@@ -113,9 +114,24 @@ module.exports = function () {
 
 
     // Finds all words given letters.
-    this.findWords = function( letters, size ) {
+    this.findWords = function( letters, size, dictIndex ) {
         var words = [];
-        var node = root;
+
+        // Verify that dictIndex is valid.
+
+        // Trivial Rejection
+        if (dictionariesLoaded.indexOf(dictIndex) == -1) {
+            console.log("Bad Dictionary Name!" + dictIndex);
+            return;
+        }
+
+        if (!letters || size === 0) {
+            console.log("bad params! letters = " + letters + " size = " + size );
+            return;
+        }
+
+
+        var node = root[dictIndex];
 
         // Assume boards are always square and that letters passed in are read left to right, top row to bottom.  for example abc def ghi represent the following board:
         // abc
@@ -133,6 +149,18 @@ module.exports = function () {
             visited[row] = new Array(size);
             for (var col = 0; col < columns; col++) {
                 visited[row][col] = false;
+            };
+        };
+
+//        if (letterMatrix)
+//            letterMatrix.length = 0;
+
+        // Make a two dim array mimicing the board matrix
+        letterMatrix = new Array(size);
+        for (var row = 0; row < size; row++) {
+            letterMatrix[row] = new Array(size);
+            for (var col = 0; col < size; col++) {
+                letterMatrix[row][col] = '';
             };
         };
 
@@ -211,8 +239,20 @@ module.exports = function () {
     };
 
     // Finds a word, returns 1 if the word was found, 0 otherwise
-    var find = function (word) {
-        var node = root,
+    var find = function (word, dictIndex) {
+
+        // Trivial Rejection
+        if (dictionariesLoaded.indexOf(dictIndex) == -1) {
+            console.log("Bad Dictionary Name!" + dictIndex);
+            return 0;
+        }
+
+        if (word === null) {
+            console.log("Null word!");
+            return 0;
+        }
+
+        var node = root[dictIndex],
             i, letter;
 
         for (i = 0; i < word.length; i++) {
@@ -226,12 +266,26 @@ module.exports = function () {
     };
 
     // Returns the subtree matching the letter given
-    this.get = function (letter) {
-        return root.edges[letter.toUpperCase()];
+    this.get = function (dictIndex, letter) {
+
+        // Trivial Rejection
+        if (root.indexOf(dictIndex) == -1) {
+            console.log("Bad Dictionary Name!" + dictIndex);
+            return;
+        }
+
+        return root[dictIndex].edges[letter.toUpperCase()];
     };
 
+    function baseName(str) {
+        var base = new String(str).substring(str.lastIndexOf('\\') + 1);
+        if (base.lastIndexOf(".") != -1)
+            base = base.substring(0, base.lastIndexOf("."));
+        return base;
+    }
+
     // Loads a newline-separated file from disk containing words to use
-    this.load = function (dictionary, onCompleted) {
+    this.load = function (pathToDictionary, onCompleted) {
         process.nextTick(function () {
             var words = { 
                 // TODO: fix a better way of handling huge dictionaries.
@@ -248,16 +302,33 @@ module.exports = function () {
 
             nextId = 0;
             previousWord = '';
-            root = { id: nextId++, edges: {}, $: 0 };
+            var dictFileName = baseName(pathToDictionary);
+
+            root[dictFileName] = { id: nextId++, edges: {}, $: 0 };
             uncheckedNodes = [];
             minimizedNodes = {};
 
-            fs.readFileSync(dictionary)
+            // Add dictoionary to list for later verification of input.
+            console.log(pathToDictionary);
+            //console.log(dictionaryToUse.replace(/^.*[\\\/]/, ''));
+            console.log(baseName(pathToDictionary));
+
+            var count = 0;
+
+            dictionariesLoaded.push(baseName(dictFileName));
+            fs.readFileSync(pathToDictionary)
                 .toString()
                 .split('\r\n')
                 .forEach(function (word) {
                     var i, idx;
 
+                    // If the string is essentially empty, or is whitespace or numbers, skip it.
+                    if (!word.match(/[a-zA-Z]/g)) {
+                        // alphabet letters found
+                        return;
+                    }
+
+                    count++;
                     words[word[0]].push(word);
                     word += '_';
                     for (i = 2; i < word.length; i++) {
@@ -267,10 +338,15 @@ module.exports = function () {
                     }
                 });
 
+            //console.log("Words Loaded for " + dictFileName + " " + count + " words length " + words.length);
             for (letter in words) {
                 if (words.hasOwnProperty(letter)) {
                     words[letter].sort();
-                    words[letter].forEach(insert);
+                    //words[letter].forEach(insert);
+
+                    for ( var i in words[letter] ) {
+                        insert(dictFileName, words[letter][i]);
+                    };   
                 }
             }
             finish();
@@ -280,8 +356,12 @@ module.exports = function () {
         });
     };
 
+    this.init = function () {
+        //
+    }
+
     return {
-        createBoard: createBoard,
+        init: init,
         find: find,
         loadDictionary:load,
         findWords: findWords
