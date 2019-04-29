@@ -5,10 +5,10 @@
   "main": "app.js",
   "author": {
     "name": "Jeff Brown",
-    "email": "jeff@cheezburger.com"
+    "email": "jeff@dragonkeep.org"
   },
   "dependencies": {
-    "express": ">=3.11.0"
+    "express": ">=3.11.0",
     "jade": "*",
     "stylus": "*"
 }
